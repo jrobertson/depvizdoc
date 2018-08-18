@@ -11,9 +11,9 @@ require 'rdiscount'
 class DepVizDoc < DepViz
 
   def initialize(s='', root: 'platform', 
-                 style: default_stylesheet(), path: '.')
+                 style: default_stylesheet(), path: '.', debug: false)
     
-    @style, @root = style, root
+    @style, @root, @debug = style, root, debug
     @header = "
 <?polyrex schema='items[type]/item[label, url]' delimiter =' # '?>
 type: digraph
@@ -21,8 +21,11 @@ type: digraph
     "
     
     return if s.empty?
-    
-    @s = tree = DependencyBuilder.new(s).to_s   
+
+    puts 'DepVizDoc::initialize before DependencyBuilder' if @debug
+    @s = tree = DependencyBuilder.new(s).to_s
+    puts 'master @s: ' + @s.inspect if @debug
+    puts 'DepVizDoc::initialize after DependencyBuilder' if @debug
     
     s2 = tree.lines.map do |line|
       x = line.chomp
@@ -31,49 +34,50 @@ type: digraph
     
     
     s = root ? (root + "\n" + s2.lines.map {|x| '  ' + x}.join) : s2
-
+    
+    puts 'DepVizDoc::initialize before PxGraphViz' if @debug
     @pxg = PxGraphViz.new(@header + s, style: style)
+    puts 'DepVizDoc::initialize after PxGraphViz' if @debug
     
     # generate each HTML file
     items = tree.lines.flatten.map {|x| x.chomp.lstrip }.uniq
     
     FileUtils.mkdir_p File.join(path, 'svg')
     
-    items.each do |item|
+    items.each do |name|
+      
+      puts 'DepVizDoc::initialize name: ' + name.inspect if @debug
       
       # generate the dependency chart      
-      File.write File.join(path, 'svg', item + '_dep.svg'), 
-          self.item(item).dependencies.to_svg
+      File.write File.join(path, 'svg', name + '_dep.svg'), 
+          self.item(name).dependencies.to_svg
       
-      rdep = self.item(item).reverse_dependencies
+      rdep = self.item(name).reverse_dependencies
       # generate the reverse dependency chart
-      
-      if rdep then
-        File.write File.join(path, 'svg', item + '_rdep.svg'), rdep.to_svg
-      end
-      
+
       md = "
-# #{item}      
+# #{name}      
 
 ## Dependencies
 
-![](#{File.join(path, 'svg', item + '_dep.svg')})
+![](#{File.join(path, 'svg', name + '_dep.svg')})
 
 ## Reverse dependencies
 
 "
 
       md << if rdep then
-        "![](%s)" % File.join(path, 'svg', item + '_rdep.svg')
+        File.write File.join(path, 'svg', name + '_rdep.svg'), rdep.to_svg      
+        "![](%s)" % File.join(path, 'svg', name + '_rdep.svg')
       else
         'none'
       end    
 
       html = RDiscount.new(Martile.new(md).to_s).to_html
-      File.write File.join(item + '.html'), html
+      File.write File.join(name + '.html'), html
       
     end
 
   end
-
+    
 end
