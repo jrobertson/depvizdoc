@@ -38,7 +38,8 @@ type: digraph
   end
   
   def build(s)
-
+    
+    puts 'inside build : s: ' + s.inspect if @debug
     return if s.empty?    
     
     lines = s.lines
@@ -59,11 +60,11 @@ type: digraph
     
     puts 'DepVizDoc::initialize before PxGraphViz' if @debug
     @pxg = PxGraphViz.new(@header + s, style: @style)
-    puts 'DepVizDoc::initialize after PxGraphViz' if @debug
-    
-
+    puts 'DepVizDoc::initialize after PxGraphViz' if @debug    
     
   end
+  
+  alias import build
 
   def render(path=@path)
     # generate each HTML file

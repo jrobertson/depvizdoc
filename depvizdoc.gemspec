@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'depvizdoc'
-  s.version = '0.2.0'
+  s.version = '0.2.1'
   s.summary = 'Generates a hyperlinked SVG document containing relative ' + 
       'dependencies for all the given dependencies.'
   s.authors = ['James Robertson']
