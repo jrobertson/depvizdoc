@@ -8,22 +8,44 @@ require 'martile'
 require 'rdiscount'
 
 
+module RegGem
+
+  def self.register()
+'
+hkey_gems
+  doctype
+    depvizdoc
+      require depvizdoc
+      class DepVizDoc
+      media_type html
+'      
+  end
+end
+
+
 class DepVizDoc < DepViz
 
   def initialize(s='', root: 'platform', 
                  style: default_stylesheet(), path: '.', debug: false)
     
-    @style, @root, @debug = style, root, debug
+    @style, @root, @debug, @path = style, root, debug, path
     @header = "
 <?polyrex schema='items[type]/item[label, url]' delimiter =' # '?>
 type: digraph
 
     "
+    build(s)
+  end
+  
+  def build(s)
+
+    return if s.empty?    
     
-    return if s.empty?
+    lines = s.lines
+    lines.shift if lines.first =~ /^<\?depvizdoc\b/
 
     puts 'DepVizDoc::initialize before DependencyBuilder' if @debug
-    @s = tree = DependencyBuilder.new(s).to_s
+    @s = tree = DependencyBuilder.new(lines.join).to_s
     puts 'master @s: ' + @s.inspect if @debug
     puts 'DepVizDoc::initialize after DependencyBuilder' if @debug
     
@@ -33,14 +55,19 @@ type: digraph
     end.join("\n")
     
     
-    s = root ? (root + "\n" + s2.lines.map {|x| '  ' + x}.join) : s2
+    s = @root ? (@root + "\n" + s2.lines.map {|x| '  ' + x}.join) : s2
     
     puts 'DepVizDoc::initialize before PxGraphViz' if @debug
-    @pxg = PxGraphViz.new(@header + s, style: style)
+    @pxg = PxGraphViz.new(@header + s, style: @style)
     puts 'DepVizDoc::initialize after PxGraphViz' if @debug
     
+
+    
+  end
+
+  def render(path=@path)
     # generate each HTML file
-    items = tree.lines.flatten.map {|x| x.chomp.lstrip }.uniq
+    items = @s.lines.flatten.map {|x| x.chomp.lstrip }.uniq
     
     FileUtils.mkdir_p File.join(path, 'svg')
     
@@ -74,10 +101,15 @@ type: digraph
       end    
 
       html = RDiscount.new(Martile.new(md).to_s).to_html
-      File.write File.join(name + '.html'), html
+      File.write File.join(path, name + '.html'), html
       
-    end
-
-  end
+    end    
     
+    filepath = File.join(path, 'chart.svg')
+    File.write filepath, self.to_svg
+    
+    'saved to ' + filepath
+  end
+  
+  
 end
