@@ -24,6 +24,7 @@ end
 
 
 class DepVizDoc < DepViz
+  include RXFHelperModule
 
   def initialize(s='', root: 'platform', 
                  style: default_stylesheet(), path: '.', debug: false)
@@ -111,6 +112,11 @@ type: digraph
     
     'saved to ' + filepath
   end
-  
+
+  def save()
+    FileX.mkdir_p @path
+    FileX.write  File.join(@path, 'index.svg'), self.to_svg
+    render()
+  end 
   
 end
