@@ -24,9 +24,9 @@
       sshfs
     "
 
-    dvd = DepVizDoc.new(s)
-    File.write '/tmp/d.svg', dvd.to_svg
-    `firefox /tmp/d.svg`
+    dvd = DepVizDoc.new(s, path: '/tmp/depgraph')
+    dvd.save
+    `firefox /tmp/depgraph/index.svg`
 
 The DepVizDoc gem is designed to output an SVG document illustrating the links between dependencies as well as the relative dependencies for each item by clicking on the relevant hyperlink.
 
